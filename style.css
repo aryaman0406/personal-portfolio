@@ -547,6 +547,18 @@ body.loading .back-to-top {
   color: #ff5f56;
 }
 
+/* Contact link visibility (works for dark and light themes) */
+.contact-item-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+.contact-item-link:hover,
+.contact-item-link:focus {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .btn-loader {
   width: 18px;
   height: 18px;

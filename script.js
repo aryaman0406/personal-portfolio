@@ -360,21 +360,66 @@ document.addEventListener('DOMContentLoaded', () => {
       formStatus.className = 'form-status';
 
       try {
-        // Simulation of a backend request
-        // To use real Formspree: uncomment below and replace YOUR_ID
-        /*
-        const response = await fetch('https://formspree.io/f/YOUR_ID', {
-          method: 'POST',
-          body: formData,
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!response.ok) throw new Error();
-        */
+        // Prefer server submission via Formspree when a form ID is provided
+        const formspreeId = this.dataset.formspreeId && this.dataset.formspreeId.trim();
+        if (formspreeId) {
+          const endpoint = `https://formspree.io/f/${formspreeId}`;
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+          }).catch(() => null);
 
-        // For demo: artificial delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+          if (response && response.ok) {
+            btnText.textContent = 'Sent Successfully!';
+            btnLoader.classList.add('visually-hidden');
+            submitBtn.classList.add('btn-success');
+            formStatus.textContent = "Thanks! I'll get back to you soon.";
+            formStatus.classList.add('success');
+            this.reset();
 
-        // Success state
+            setTimeout(() => {
+              btnText.textContent = 'Send Message';
+              submitBtn.classList.remove('btn-success');
+              submitBtn.disabled = false;
+            }, 5000);
+
+            return;
+          } else {
+            // If server submission failed, fall back to mailto (if configured) or show error
+            console.warn('Formspree submission failed or returned non-OK response');
+          }
+        }
+
+        // Mailto fallback: if `data-mailto-email` is set on the form, open user's mail client
+        const mailtoEmail = this.dataset.mailtoEmail;
+        if (mailtoEmail) {
+          const name = formData.get('name') || '';
+          const email = formData.get('email') || '';
+          const message = formData.get('message') || '';
+          const subject = encodeURIComponent(`Portfolio message from ${name}`);
+          const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
+          window.location.href = `mailto:${mailtoEmail}?subject=${subject}&body=${body}`;
+
+          // UI success state after opening mail client
+          btnText.textContent = 'Opened Email Client';
+          btnLoader.classList.add('visually-hidden');
+          submitBtn.classList.add('btn-success');
+          formStatus.textContent = "A new email opened in your mail client. Please send it to reach me.";
+          formStatus.classList.add('success');
+          this.reset();
+
+          setTimeout(() => {
+            btnText.textContent = 'Send Message';
+            submitBtn.classList.remove('btn-success');
+            submitBtn.disabled = false;
+          }, 5000);
+
+          return;
+        }
+
+        // Fallback demo (no backend configured)
+        await new Promise(resolve => setTimeout(resolve, 1200));
         btnText.textContent = 'Sent Successfully!';
         btnLoader.classList.add('visually-hidden');
         submitBtn.classList.add('btn-success');
